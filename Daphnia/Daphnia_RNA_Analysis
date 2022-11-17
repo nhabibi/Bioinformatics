@@ -1,0 +1,68 @@
+#DEG tools: ANOVA - Limma - DESeq - EdgeR
+
+library(DESeq2)
+library(ggplot2)
+library(ggfortify)
+
+
+setwd("/Users/narges/Documents/UoB/My_Projects/3-Daphnia_Multiomics_Tim/Data_Code_Result/")
+
+#PCA
+readCount_norm <- read.csv('readCount_normalized.csv', header=TRUE, sep=',')
+readCount_norm[1] <- NULL
+readCount_norm_pca <- prcomp(readCount_norm, center = TRUE, scale. = TRUE)
+autoplot(readCount_norm_pca, data=readCount_norm)
+
+
+#DESeq
+col_data <- read.csv('colData.csv', header=TRUE, sep=',')
+#head(col_data)
+
+count_data = read.csv('readCount.csv', header=TRUE, sep=',')
+#head(count_data)
+
+
+#design_formula <- ~Population+Algae+Population:Algae
+
+dds <- DESeqDataSetFromMatrix( countData=count_data, colData=col_data, tidy=TRUE, design=~1)
+
+dds$group <- factor(paste0(dds$Population, dds$Algae))
+design(dds) <- ~ group
+dds <- DESeq(dds)
+resultsNames(dds)
+
+
+contrast=c("group", "PristineLow", "PristineHigh")
+res1 <- results(dds, contrast=contrast, alpha=0.05)
+summary(res1)
+write.csv(as.data.frame(res1[order(res1$padj),] ), file="PristineLow_vs_PristineHigh.csv")
+
+
+contrast=c("group", "EutrophicLow", "EutrophicHigh")
+res2 <- results(dds, contrast=contrast, alpha=0.05)
+summary(res2)
+write.csv(as.data.frame(res2[order(res2$padj),] ), file="EutrophicLow_vs_EutrophicHigh.csv")
+
+
+contrast=c("group", "PristineLow", "EutrophicLow")
+res3 <- results(dds, contrast=contrast, alpha=0.05)
+summary(res3)
+write.csv(as.data.frame(res3[order(res3$padj),] ), file="PristineLow_vs_EutrophicLow.csv")
+
+
+contrast=c("group", "PristineHigh", "EutrophicHigh")
+res4 <- results(dds, contrast=contrast, alpha=0.05)
+summary(res4)
+write.csv(as.data.frame(res4[order(res4$padj),] ), file="PristineHigh_vs_EutrophicHigh.csv")
+
+
+par(mfrow=c(2,2))
+plotMA(res1, main="PristineLow_vs_PristineHigh")
+plotMA(res2, main="EutrophicLow_vs_EutrophicHigh")
+plotMA(res3, main="PristineLow_vs_EutrophicLow")
+plotMA(res4, main="PristineHigh_vs_EutrophicHigh")
+
+
+
+
+
