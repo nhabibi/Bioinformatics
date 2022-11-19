@@ -1,1 +1,0 @@
-DELETE FROM new_data
